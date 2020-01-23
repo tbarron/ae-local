@@ -1,0 +1,94 @@
+#!/bin/zsh
+
+function assert_eq () {
+    if [[ "$1" != "$2" ]]; then
+        echo "assertion failure: '$1' != '$2' ($3)"
+    fi
+    exit
+}
+
+function assert_ne () {
+    if [[ "$1" == "$2" ]]; then
+        echo "assertion failure: '$1' == '$2' ($3)"
+    fi
+    exit
+}
+
+function run_test () {
+    autoenv_init
+    CURRENT=$PWD
+    autoenv_cd $1
+
+    assert_eq $PWD $1 "PWD != $1"
+    assert_eq $AE_LOCATION $1 "$AE_LOCATION != $1"
+    assert_ne "$(grep ae_cwd_is_envroot .env)" "" "ae_cwd_is_envroot missing"
+
+    autoenv_cd $CURRENT
+
+    assert_eq $AE_LOCATION ""
+
+    for candy in autoenv_funcs_drop \
+                     ae_drop_funcs \
+                     ae_cwd_is_envroot \
+                     is_function \
+                     ae_mk_chpwd \
+                     autoenv_leave \
+                     chpwd \
+                 ; do
+        assert_eq "$(shfl $candy)" "" "$candy shows up"
+    done
+}
+
+for testee in ~/prj/bear/bear-python-client \
+              ~/prj/bitbucket/euler \
+              ~/prj/bitbucket/math \
+              ~/prj/bitbucket/pur \
+              ~/prj/bitbucket/pybp \
+              ~/prj/bitbucket/rogue \
+              ~/prj/bitbucket/xcal \
+              ~/prj/chal \
+              ~/prj/edx \
+              ~/prj/fw \
+              ~/prj/game \
+              ~/prj/github \
+              ~/prj/github/backscratcher \
+              ~/prj/github/bearomator \
+              ~/prj/github/calc \
+              ~/prj/github/collatz \
+              ~/prj/github/docopt-dispatch \
+              ~/prj/github/dtm \
+              ~/prj/github/editor \
+              ~/prj/github/em \
+              ~/prj/github/envy \
+              ~/prj/github/evernote_helpers \
+              ~/prj/github/fx \
+              ~/prj/github/gh \
+              ~/prj/github/gitr \
+              ~/prj/github/maya \
+              ~/prj/github/nldt \
+              ~/prj/github/pybp \
+              ~/prj/github/pyppi \
+              ~/prj/github/pytool \
+              ~/prj/github/scrape \
+              ~/prj/github/swak \
+              ~/prj/github/tbarron.github.io \
+              ~/prj/github/tbx \
+              ~/prj/github/textbase \
+              ~/prj/github/tusculum \
+              ~/prj/github/xcal \
+              ~/prj/jach \
+              ~/prj/magic \
+              ~/prj/mlearn \
+              ~/prj/mm \
+              ~/prj/pyauth \
+              ~/prj/schrape \
+              ~/prj/se_learn \
+              ~/prj/sku \
+              ~/prj/static/hyde \
+              ~/prj/static/pelican \
+              ~/prj/static/pelican_proj \
+              ~/prj/unread \
+              ~/prj/veskit; do
+    echo ">>>>>>>>>>>>>>>>> $testee"
+    # run_test $testee
+done

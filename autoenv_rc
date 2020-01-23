@@ -1,0 +1,9 @@
+#!@! source autoenv activate.sh if available
+debug
+if [[ `which activate.sh` =~ "not found" ]]; then
+    echo "activate.sh not found -- AUTOENV is not active"
+else
+    echo "Activating AUTOENV -- on cd, will source .env"
+    source `which activate.sh`
+fi
+

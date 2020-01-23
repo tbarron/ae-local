@@ -1,0 +1,110 @@
+#!/bin/zsh
+# -----------------------------------------------------------------------------
+# Drop the functions defined in this file
+function autoenv_funcs_drop() {
+    for func in is_function \
+                    mk_chpwd \
+                    autoenv_funcs_drop; do
+        unfunction $func
+    done
+}
+
+# -----------------------------------------------------------------------------
+# Drop the '^ae_' functions
+function ae_drop_funcs() {
+    for func in $(ae_function_list "^ae_"); do
+        unfunction $func
+    done
+    autoenv_funcs_drop
+}
+
+# -----------------------------------------------------------------------------
+# Call this as 'cwd_is_envroot $0'. It returns success if the .env
+# being run is at the top level of $PWD
+#
+function ae_cwd_is_envroot() {
+    if [[ "$PWD" == "$(dirname $1)" ]]; then
+        if [[ "$AUTOENV_VERBOSE" ==  "1" ]]; then
+            echo "$PWD == $(dirname $1)"
+        fi
+        return 0
+    else
+        if [[ "$AUTOENV_VERBOSE" ==  "1" ]]; then
+            echo "$PWD != $(dirname $1)"
+        fi
+        return 1
+    fi
+}
+
+# -----------------------------------------------------------------------------
+# Activate a virtual environment. $VENV if it's set, if not, $LP_VENV
+# ("local preferences venv") if it's set, otherwise "venv.3.8".
+function ae_activate_venv() {
+    source ${VENV:-${1:-venv.3.8}}/bin/activate
+}
+
+# -----------------------------------------------------------------------------
+# Return 0 if $1 contains the name of a defined function, otherwise 1
+function is_function() {
+    if [[ $(which "$1" | grep "not found") ]]; then
+        return 1
+    else
+        return 0
+    fi
+}
+
+# -----------------------------------------------------------------------------
+# Return a list of defined functions matching the regexp in $1
+function ae_function_list {
+    typeset -f | awk '/ \(\) {$/ {print $1}' | grep "$1"
+}
+
+# -----------------------------------------------------------------------------
+# Return a list of defined functions matching the regexp in $1
+function shfl {
+    typeset -f | awk '/ \(\) {$/ {print $1}' | grep "$1"
+}
+
+# -----------------------------------------------------------------------------
+# Create function chpwd. If deactivate is defined, call it, then
+# undefine it. If autoenv_leave is defined, call it, then undefine it.
+function mk_chpwd() {
+    function chpwd() {
+        if is_function deactivate; then
+            deactivate
+        fi
+        if is_function autoenv_leave; then
+            autoenv_leave
+            if is_function autoenv_leave; then
+                unfunction autoenv_leave
+            fi
+        fi
+        unfunction chpwd
+        autoenv_funcs_drop
+    }
+}
+
+# -----------------------------------------------------------------------------
+# Create function chpwd. If deactivate is defined, call it, then
+# undefine it. If autoenv_leave is defined, call it, then undefine it.
+function ae_mk_chpwd() {
+    function chpwd() {
+        if [[ "$AUTOENV_VERBOSE" == "1" ]]; then
+            echo "Leaving $AE_LOCATION"
+        fi
+        if is_function deactivate; then
+            deactivate
+        fi
+        if is_function autoenv_leave; then
+            autoenv_leave
+            if is_function autoenv_leave; then
+                unfunction autoenv_leave
+            fi
+        fi
+        unfunction chpwd
+        ae_drop_funcs
+        unset AE_LOCATION
+    }
+}
+
+export AE_LOCATION=$PWD
